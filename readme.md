@@ -15,7 +15,7 @@ DAY 1 - 27/04/26 Monday 9.05 AM to 6.56 PM
 
 
 
-DAY 2 - 28/04/26 Tuesday 9.14 AM to PM
+DAY 2 
 
 - API
 - Post Man
@@ -23,4 +23,14 @@ DAY 2 - 28/04/26 Tuesday 9.14 AM to PM
 - REST API
 - Fast API
 
+DAY 3 
+- Fast API CRUD
+- POSTMAN TESTING Implimentation
 
+DAY 4 
+- FAST API- CRUD Implimentation
+
+DAY 5 
+FAST API x DB 
+Database OPeratios.
+Pagination
