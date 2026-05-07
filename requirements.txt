@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pymysql
+# Optional but common: helps FastAPI validate types nicely
+pydantic

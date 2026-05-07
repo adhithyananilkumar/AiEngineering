@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "FastAPI - Simple Tests",
+    "name": "FastAPI - Student Management API",
     "_postman_id": "a1b2c3d4-FASTAPI-SIMPLE",
-    "description": "A small Postman collection to test the FastAPI app in main.py",
+    "description": "Beginner CRUD tests for the Student Management API (/students)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -43,7 +43,7 @@
       ]
     },
     {
-      "name": "Create Item - POST /items",
+      "name": "Create Student - POST /students",
       "request": {
         "method": "POST",
         "header": [
@@ -51,20 +51,21 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"name\": \"Sample item\",\n  \"description\": \"A test item\"\n}"
+          "raw": "{\n  \"name\": \"Akhil\",\n  \"age\": 20\n}"
         },
-        "url": { "raw": "{{baseUrl}}/items", "host": ["{{baseUrl}}"], "path": ["items"] }
+        "url": { "raw": "{{baseUrl}}/students", "host": ["{{baseUrl}}"], "path": ["students"] }
       },
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status is 200\", function () { pm.response.to.have.status(200); });",
-              "pm.test(\"Response has id and name\", function () {",
+              "pm.test(\"Status is 201\", function () { pm.response.to.have.status(201); });",
+              "pm.test(\"Response has id, name, age\", function () {",
               "  var json = pm.response.json();",
               "  pm.expect(json).to.have.property('id');",
               "  pm.expect(json).to.have.property('name');",
+              "  pm.expect(json).to.have.property('age');",
               "});"
             ],
             "type": "text/javascript"
@@ -73,11 +74,11 @@
       ]
     },
     {
-      "name": "List Items - GET /items",
+      "name": "List Students - GET /students?skip=0&limit=10",
       "request": {
         "method": "GET",
         "header": [],
-        "url": { "raw": "{{baseUrl}}/items", "host": ["{{baseUrl}}"], "path": ["items"] }
+        "url": { "raw": "{{baseUrl}}/students?skip=0&limit=10", "host": ["{{baseUrl}}"], "path": ["students"], "query": [ { "key": "skip", "value": "0" }, { "key": "limit", "value": "10" } ] }
       },
       "event": [
         {
@@ -96,15 +97,15 @@
       ]
     },
     {
-      "name": "Get Item - GET /items/:item_id",
+      "name": "Get Student - GET /students/:student_id",
       "request": {
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/items/:item_id",
+          "raw": "{{baseUrl}}/students/:student_id",
           "host": ["{{baseUrl}}"],
-          "path": ["items", ":item_id"],
-          "variable": [ { "key": "item_id", "value": "1" } ]
+          "path": ["students", ":student_id"],
+          "variable": [ { "key": "student_id", "value": "1" } ]
         }
       },
       "event": [
@@ -122,21 +123,21 @@
       ]
     },
     {
-      "name": "Update Item - PUT /items/:item_id",
+      "name": "Update Student - PUT /students/:student_id",
       "request": {
         "method": "PUT",
         "header": [ { "key": "Content-Type", "value": "application/json" } ],
-        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated name\",\n  \"description\": \"Updated desc\"\n}" },
-        "url": { "raw": "{{baseUrl}}/items/:item_id", "host": ["{{baseUrl}}"], "path": ["items", ":item_id"], "variable": [ { "key": "item_id", "value": "1" } ] }
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Akhil Updated\",\n  \"age\": 21\n}" },
+        "url": { "raw": "{{baseUrl}}/students/:student_id", "host": ["{{baseUrl}}"], "path": ["students", ":student_id"], "variable": [ { "key": "student_id", "value": "1" } ] }
       },
       "event": [ { "listen": "test", "script": { "exec": [ "pm.test(\"Status is 200 or 404\", function () { pm.expect(pm.response.code === 200 || pm.response.code === 404).to.be.true; });" ], "type": "text/javascript" } } ]
     },
     {
-      "name": "Delete Item - DELETE /items/:item_id",
+      "name": "Delete Student - DELETE /students/:student_id",
       "request": {
         "method": "DELETE",
         "header": [],
-        "url": { "raw": "{{baseUrl}}/items/:item_id", "host": ["{{baseUrl}}"], "path": ["items", ":item_id"], "variable": [ { "key": "item_id", "value": "1" } ] }
+        "url": { "raw": "{{baseUrl}}/students/:student_id", "host": ["{{baseUrl}}"], "path": ["students", ":student_id"], "variable": [ { "key": "student_id", "value": "1" } ] }
       },
       "event": [ { "listen": "test", "script": { "exec": [ "pm.test(\"Status is 200 or 404\", function () { pm.expect(pm.response.code === 200 || pm.response.code === 404).to.be.true; });" ], "type": "text/javascript" } } ]
     }
