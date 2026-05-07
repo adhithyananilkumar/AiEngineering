@@ -65,6 +65,10 @@ export DB_PORT="3306"
 export DB_NAME="student_db"
 ```
 
+Tip (optional):
+- Copy `.env.example` to `.env` so you have your DB values saved in one place.
+- This project still reads from environment variables, so you’ll either export them (as above) or set them in your shell profile.
+
 If you don’t set them, defaults are used (see `database.py`).
 
 ## 4) Run the API

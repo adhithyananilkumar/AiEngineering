@@ -3,11 +3,8 @@ __pycache__/
 *$py.class
 venv/
 .venv
-
-# local env files (do not commit passwords)
 .env
-
-# common tooling caches
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+__pycache__
