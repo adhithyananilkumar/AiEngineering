@@ -34,7 +34,9 @@ def _build_database_url() -> str:
 
     db_user = os.getenv("DB_USER", "root")
     db_password = os.getenv("DB_PASSWORD", "password")
-    db_host = os.getenv("DB_HOST", "127.0.0.1")
+    # Using "localhost" is beginner-friendly and matches common MySQL user creation like:
+    # CREATE USER 'student_user'@'localhost' ...
+    db_host = os.getenv("DB_HOST", "localhost")
     db_port = os.getenv("DB_PORT", "3306")
     db_name = os.getenv("DB_NAME", "student_db")
 

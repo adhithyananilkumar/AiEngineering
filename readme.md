@@ -60,10 +60,14 @@ This project reads DB settings from environment variables. Example:
 ```bash
 export DB_USER="student_user"
 export DB_PASSWORD="student_pass"
-export DB_HOST="127.0.0.1"
+export DB_HOST="localhost"
 export DB_PORT="3306"
 export DB_NAME="student_db"
 ```
+
+Important note (common beginner issue):
+- In MySQL/MariaDB, `'user'@'localhost'` is different from `'user'@'127.0.0.1'`.
+- Since you created `student_user@localhost`, keep `DB_HOST="localhost"`.
 
 Tip (optional):
 - Copy `.env.example` to `.env` so you have your DB values saved in one place.
