@@ -2,5 +2,7 @@ fastapi
 uvicorn[standard]
 sqlalchemy
 pymysql
+psycopg2-binary
+motor
 # Optional but common: helps FastAPI validate types nicely
 pydantic
