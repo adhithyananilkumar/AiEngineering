@@ -155,6 +155,13 @@ Alternative (works for both): set a full SQLAlchemy URL:
 export DATABASE_URL="postgresql+psycopg2://student_user:student_pass@localhost:5432/student_db"
 ```
 
+If you only want to use the MongoDB endpoints and don’t have SQL configured yet, the API will still start.
+To make SQL startup mandatory (fail fast), set:
+
+```bash
+export SQL_STARTUP_STRICT=true
+```
+
 Important note (common beginner issue):
 - In MySQL/MariaDB, `'user'@'localhost'` is different from `'user'@'127.0.0.1'`.
 - Since you created `student_user@localhost`, keep `DB_HOST="localhost"`.
@@ -186,6 +193,19 @@ uvicorn main:app --reload
 
 Open Swagger UI:
 - http://127.0.0.1:8000/docs
+
+Open the auth demo pages:
+- http://127.0.0.1:8000/auth
+- http://127.0.0.1:8000/session/login
+- http://127.0.0.1:8000/jwt/login
+
+Demo credentials:
+- username: `admin`
+- password: `admin123`
+
+Auth notes:
+- Session login stores the user in a signed cookie managed by session middleware.
+- JWT login stores a signed token in an HTTP-only cookie.
 
 ## 5) API Endpoints (CRUD)
 

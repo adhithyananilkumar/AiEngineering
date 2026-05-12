@@ -1,6 +1,10 @@
 import os
 
+from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+
+
+load_dotenv()
 
 
 def _get_mongo_uri() -> str:
