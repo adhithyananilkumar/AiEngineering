@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 
 import models
 import schemas
+import auth
 
 
 def create_student(db: Session, student_in: schemas.StudentCreate) -> models.Student:
@@ -58,3 +59,25 @@ def delete_student(db: Session, student_id: int) -> bool:
     db.commit()
 
     return True
+
+
+def get_user_by_username(db: Session, username: str) -> models.User | None:
+    return db.query(models.User).filter(models.User.username == username).first()
+
+
+def create_user(db: Session, user_in: schemas.UserCreate) -> models.User:
+    hashed = auth.get_password_hash(user_in.password)
+    user = models.User(username=user_in.username, hashed_password=hashed)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def authenticate_user(db: Session, username: str, password: str) -> models.User | None:
+    user = get_user_by_username(db, username)
+    if not user:
+        return None
+    if not auth.verify_password(password, user.hashed_password):
+        return None
+    return user

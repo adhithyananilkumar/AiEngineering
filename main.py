@@ -9,6 +9,7 @@ from fastapi import Depends, FastAPI, Form, HTTPException, Query, Request, statu
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 
 import crud
 import mongo_crud
@@ -17,6 +18,7 @@ import mongo_schemas
 import schemas
 from database import engine, get_db
 from mongo_database import close_mongo_client, get_mongo_db
+import auth
 
 
 logger = logging.getLogger(__name__)
@@ -30,6 +32,8 @@ JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "30"))
 DEMO_USERNAME = os.getenv("DEMO_USERNAME", "admin")
 DEMO_PASSWORD = os.getenv("DEMO_PASSWORD", "admin123")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 app.add_middleware(
     SessionMiddleware,
@@ -243,6 +247,38 @@ def jwt_logout():
     response = RedirectResponse(url="/jwt/login", status_code=status.HTTP_303_SEE_OTHER)
     response.delete_cookie("access_token")
     return response
+
+
+@app.post("/register", response_model=schemas.UserOut)
+def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    existing = crud.get_user_by_username(db, user.username)
+    if existing:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
+
+    created = crud.create_user(db, user)
+    return created
+
+
+@app.post("/token", response_model=schemas.Token)
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = crud.authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
+
+    access_token = auth.create_access_token(user.username)
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@app.get("/me", response_model=schemas.UserOut)
+def read_me(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    username = auth.decode_access_token(token)
+    if not username:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication credentials")
+
+    user = crud.get_user_by_username(db, username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    return user
 
 
 @app.post("/students", response_model=schemas.StudentOut, status_code=status.HTTP_201_CREATED)

@@ -44,3 +44,20 @@ class StudentOut(StudentBase):
 
     # This tells Pydantic v2 how to read data from ORM objects (SQLAlchemy models)
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserCreate(BaseModel):
+    username: str = Field(..., example="alice")
+    password: str = Field(..., min_length=6)
+
+
+class UserOut(BaseModel):
+    id: int
+    username: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str

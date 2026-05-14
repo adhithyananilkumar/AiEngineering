@@ -10,3 +10,4 @@ PyJWT
 itsdangerous
 # Optional but common: helps FastAPI validate types nicely
 pydantic
+passlib[bcrypt]
