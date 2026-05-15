@@ -10,8 +10,15 @@ We keep them separate because it's cleaner and scales better.
 """
 
 from typing import Optional
+from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class UserRole(str, Enum):
+    """User roles for RBAC."""
+    ADMIN = "admin"
+    USER = "user"
 
 
 class StudentBase(BaseModel):
@@ -49,11 +56,13 @@ class StudentOut(StudentBase):
 class UserCreate(BaseModel):
     username: str = Field(..., example="alice")
     password: str = Field(..., min_length=6)
+    role: UserRole = Field(default=UserRole.USER, example="user")
 
 
 class UserOut(BaseModel):
     id: int
     username: str
+    role: UserRole
 
     model_config = ConfigDict(from_attributes=True)
 

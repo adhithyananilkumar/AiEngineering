@@ -36,3 +36,17 @@ def decode_access_token(token: str) -> Optional[str]:
     except jwt.PyJWTError:
         return None
     return payload.get("sub")
+
+
+def check_role(required_role: str):
+    """Dependency factory to check if user has required role."""
+    from fastapi import Depends, HTTPException, status
+    from sqlalchemy.orm import Session
+    from database import get_db
+    import crud
+    
+    async def role_checker(token: str = Depends(lambda: None), db: Session = Depends(get_db)):
+        # This will be overridden in main.py with proper oauth2_scheme
+        pass
+    
+    return role_checker

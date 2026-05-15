@@ -281,6 +281,177 @@ def read_me(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     return user
 
 
+# RBAC Dependencies
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> models.User:
+    """Get current user from JWT token."""
+    username = auth.decode_access_token(token)
+    if not username:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication credentials")
+    
+    user = crud.get_user_by_username(db, username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    return user
+
+
+def require_admin(current_user: models.User = Depends(get_current_user)) -> models.User:
+    """Dependency to require admin role."""
+    if current_user.role != models.UserRole.ADMIN:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return current_user
+
+
+# Dashboard HTML Routes
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard_redirect(request: Request):
+    """Redirect to appropriate dashboard based on token in Authorization header."""
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return RedirectResponse(url="/jwt/login", status_code=status.HTTP_303_SEE_OTHER)
+    
+    token = auth_header[7:]  # Remove "Bearer " prefix
+    username = auth.decode_access_token(token)
+    if not username:
+        return RedirectResponse(url="/jwt/login", status_code=status.HTTP_303_SEE_OTHER)
+    
+    # Note: In practice, you'd query DB or store role in JWT payload
+    # For now, redirect to /user-dashboard (can be enhanced)
+    return RedirectResponse(url="/user-dashboard", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.get("/admin-dashboard", response_class=HTMLResponse)
+def admin_dashboard(current_user: models.User = Depends(require_admin)):
+    """Admin dashboard - view and manage all users."""
+    return render_page(
+        "Admin Dashboard",
+        f"""
+        <h1>Admin Dashboard</h1>
+        <p>Welcome, <strong>{current_user.username}</strong> (Admin)</p>
+        
+        <h2>User Management</h2>
+        <button onclick="loadUsers()">Load All Users</button>
+        <div id="users-list"></div>
+        
+        <h2>Create New User</h2>
+        <form id="create-user-form">
+            <label>Username:</label>
+            <input type="text" id="new-username" required>
+            <label>Password:</label>
+            <input type="password" id="new-password" required>
+            <label>Role:</label>
+            <select id="new-role">
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+            </select>
+            <button type="button" onclick="createUser()">Create User</button>
+        </form>
+        
+        <p><a class="button secondary" href="/jwt/logout">Logout</a></p>
+        
+        <script>
+        async function loadUsers() {{
+            const token = localStorage.getItem('access_token');
+            const resp = await fetch('/admin/users', {{
+                headers: {{'Authorization': 'Bearer ' + token}}
+            }});
+            const users = await resp.json();
+            const html = users.map(u => `<div><strong>${{u.username}}</strong> - Role: ${{u.role}} 
+                <button onclick="deleteUser(${{u.id}})">Delete</button></div>`).join('');
+            document.getElementById('users-list').innerHTML = html;
+        }}
+        
+        async function createUser() {{
+            const username = document.getElementById('new-username').value;
+            const password = document.getElementById('new-password').value;
+            const role = document.getElementById('new-role').value;
+            const token = localStorage.getItem('access_token');
+            
+            const resp = await fetch('/admin/users', {{
+                method: 'POST',
+                headers: {{'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}},
+                body: JSON.stringify({{username, password, role}})
+            }});
+            if (resp.ok) alert('User created'); 
+            else alert('Error: ' + await resp.text());
+            loadUsers();
+        }}
+        
+        async function deleteUser(userId) {{
+            if (!confirm('Delete this user?')) return;
+            const token = localStorage.getItem('access_token');
+            const resp = await fetch('/admin/users/' + userId, {{
+                method: 'DELETE',
+                headers: {{'Authorization': 'Bearer ' + token}}
+            }});
+            if (resp.ok) alert('User deleted');
+            loadUsers();
+        }}
+        </script>
+        """,
+    )
+
+
+@app.get("/user-dashboard", response_class=HTMLResponse)
+def user_dashboard(current_user: models.User = Depends(get_current_user)):
+    """User dashboard - view own profile."""
+    return render_page(
+        "User Dashboard",
+        f"""
+        <h1>User Dashboard</h1>
+        <p>Welcome, <strong>{current_user.username}</strong></p>
+        
+        <h2>Your Profile</h2>
+        <p><strong>ID:</strong> {current_user.id}</p>
+        <p><strong>Username:</strong> {current_user.username}</p>
+        <p><strong>Role:</strong> {current_user.role.value}</p>
+        
+        {"<p><a class='button' href='/admin-dashboard'>Go to Admin Dashboard</a></p>" if current_user.role == models.UserRole.ADMIN else ""}
+        
+        <p><a class="button secondary" href="/jwt/logout">Logout</a></p>
+        """,
+    )
+
+
+# Admin API Endpoints for user management
+@app.get("/admin/users", response_model=list[schemas.UserOut])
+def get_all_users(current_user: models.User = Depends(require_admin), db: Session = Depends(get_db)):
+    """Get all users (admin only)."""
+    return db.query(models.User).all()
+
+
+@app.post("/admin/users", response_model=schemas.UserOut)
+def create_user_as_admin(
+    user: schemas.UserCreate,
+    current_user: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Create a new user (admin only)."""
+    existing = crud.get_user_by_username(db, user.username)
+    if existing:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists")
+    
+    return crud.create_user(db, user)
+
+
+@app.delete("/admin/users/{user_id}")
+def delete_user_as_admin(
+    user_id: int,
+    current_user: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Delete a user (admin only)."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    if user.id == current_user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete yourself")
+    
+    db.delete(user)
+    db.commit()
+    return {"message": "User deleted successfully"}
+
+
 @app.post("/students", response_model=schemas.StudentOut, status_code=status.HTTP_201_CREATED)
 def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
    
